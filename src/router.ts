@@ -18,7 +18,7 @@ router.put("/update/:id", () => {});
 router.delete("/update/:id", () => {});
 router.post("/update", () => {});
 
-//router for updatesPoint
+// router for update points
 router.get("/updatepoint", () => {});
 router.get("/updatepoint/:id", () => {});
 router.put("/updatepoint/:id", () => {});

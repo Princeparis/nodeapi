@@ -18,6 +18,12 @@ export const signIn = async (req, res) => {
       username: req.body.username,
     },
   });
+  if (!user) {
+    res.status(401);
+    res.json({ message: "Invalid username or password" });
+    return;
+  }
+
   const isValid = await comparePassword(req.body.password, user.password);
   if (!isValid) {
     res.status(401);

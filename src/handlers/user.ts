@@ -1,11 +1,11 @@
 import prisma from "../db";
-import { comparePassword, createJWT, hashedPassword } from "../modules/auth";
+import { comparePassword, createJWT, hashPassword } from "../modules/auth";
 
 export const createNewUser = async (req, res) => {
   const user = await prisma.user.create({
     data: {
       username: req.body.username,
-      password: await hashedPassword(req.body.password),
+    password: await hashPassword(req.body.password),
     },
   });
   const token = createJWT(user);

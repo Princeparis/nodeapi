@@ -4,6 +4,8 @@ import morgan from "morgan";
 import cors from "cors";
 import { protect } from "./modules/auth";
 import { createNewUser, signIn } from "./handlers/user";
+import { body } from "express-validator";
+import { handleInputErrors } from "./modules/middleware";
 
 const app = express();
 
@@ -19,7 +21,20 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api", protect, router);
-app.post("/user", createNewUser);
-app.post("/login", signIn);
+
+app.post(
+  "/user",
+  body("username").isString(),
+  body("password").isString(),
+  handleInputErrors,
+  createNewUser
+);
+app.post(
+  "/login",
+  body("username").isString(),
+  body("password").isString(),
+  handleInputErrors,
+  signIn
+);
 
 export default app;

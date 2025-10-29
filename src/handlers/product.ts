@@ -5,7 +5,6 @@ export const getProducts = async (req, res) => {
   const { page = 1, limit = 10, sortBy = 'name', sortOrder = 'asc', search = '', category = '' } = req.query;
 
   const where = {
-    belongsToId: req.user.id,
     ...(search && { name: { contains: search, mode: 'insensitive' } }),
     ...(category && { category: { equals: category, mode: 'insensitive' } }),
   };
@@ -35,10 +34,7 @@ export const getProduct = async (req, res) => {
   const { id } = req.params;
   const product = await prisma.product.findUnique({
     where: {
-      id_belongsToId: {
-        id,
-        belongsToId: req.user.id,
-      },
+      id,
     },
     include: {
       variants: true,
@@ -57,7 +53,6 @@ export const createProduct = async (req, res) => {
       description,
       price,
       category,
-      belongsToId: req.user.id,
     },
   });
 
@@ -70,10 +65,7 @@ export const updateProduct = async (req, res) => {
   const { name, description, price, category } = req.body;
   const product = await prisma.product.update({
     where: {
-      id_belongsToId: {
-        id,
-        belongsToId: req.user.id,
-      },
+      id,
     },
     data: {
       name,
@@ -91,10 +83,7 @@ export const deleteProduct = async (req, res) => {
   const { id } = req.params;
   await prisma.product.delete({
     where: {
-      id_belongsToId: {
-        id,
-        belongsToId: req.user.id,
-      },
+      id,
     },
   });
 
@@ -107,15 +96,12 @@ export const createProductVariant = async (req, res) => {
 
   const product = await prisma.product.findUnique({
     where: {
-      id_belongsToId: {
-        id: productId,
-        belongsToId: req.user.id,
-      },
+      id: productId,
     },
   });
 
   if (!product) {
-    return res.status(404).json({ message: "Product not found or you don't have access to it" });
+    return res.status(404).json({ message: "Product not found" });
   }
 
   const { name, description, price, attributes } = req.body;
@@ -135,20 +121,6 @@ export const createProductVariant = async (req, res) => {
 // Update a product variant
 export const updateProductVariant = async (req, res) => {
   const { variantId } = req.params;
-
-  const variantToUpdate = await prisma.productVariant.findUnique({
-    where: {
-      id: variantId,
-    },
-    include: {
-      product: true,
-    },
-  });
-
-  if (variantToUpdate?.product?.belongsToId !== req.user.id) {
-    return res.status(401).json({ message: "Unauthorized to update this variant" });
-  }
-
   const { name, description, price, attributes } = req.body;
   const variant = await prisma.productVariant.update({
     where: {
@@ -168,20 +140,6 @@ export const updateProductVariant = async (req, res) => {
 // Delete a product variant
 export const deleteProductVariant = async (req, res) => {
   const { variantId } = req.params;
-
-  const variantToDelete = await prisma.productVariant.findUnique({
-    where: {
-      id: variantId,
-    },
-    include: {
-      product: true,
-    },
-  });
-
-  if (variantToDelete?.product?.belongsToId !== req.user.id) {
-    return res.status(401).json({ message: "Unauthorized to delete this variant" });
-  }
-
   await prisma.productVariant.delete({
     where: {
       id: variantId,

@@ -29,7 +29,14 @@ import {
   getUpdatePoints,
   updateUpdatePoint,
 } from './handlers/updatepoint';
+import {
+  getCart,
+  addItemToCart,
+  updateCartItem,
+  removeItemFromCart,
+} from './handlers/cart';
 import { handleInputErrors } from './modules/middleware';
+import { adminOnly } from './modules/auth';
 import { getCurrentUser, updateUser } from './handlers/user';
 
 const router = Router();
@@ -40,7 +47,8 @@ router.put(
   '/user',
   body('firstName').optional().isString(),
   body('lastName').optional().isString(),
-  body('address').optional().isString(),
+  body('addresses').optional().isArray(),
+  body('defaultAddress').optional().isString(),
   handleInputErrors,
   updateUser
 );
@@ -55,6 +63,7 @@ router.post(
   body('price').isFloat(),
   body('category').isString(),
   handleInputErrors,
+  adminOnly,
   createProduct
 );
 router.put(
@@ -64,9 +73,10 @@ router.put(
   body('price').optional().isFloat(),
   body('category').optional().isString(),
   handleInputErrors,
+  adminOnly,
   updateProduct
 );
-router.delete('/product/:id', deleteProduct);
+router.delete('/product/:id', adminOnly, deleteProduct);
 
 // Product Variant
 router.post(
@@ -76,6 +86,7 @@ router.post(
   body('price').isFloat(),
   body('attributes').optional().isObject(),
   handleInputErrors,
+  adminOnly,
   createProductVariant
 );
 router.put(
@@ -85,9 +96,10 @@ router.put(
   body('price').optional().isFloat(),
   body('attributes').optional().isObject(),
   handleInputErrors,
+  adminOnly,
   updateProductVariant
 );
-router.delete('/variant/:variantId', deleteProductVariant);
+router.delete('/variant/:variantId', adminOnly, deleteProductVariant);
 
 // Order
 router.get('/order', getOrders);
@@ -143,5 +155,23 @@ router.put(
   updateUpdatePoint
 );
 router.delete('/updatepoint/:id', deleteUpdatePoint);
+
+// Cart
+router.get('/cart', getCart);
+router.post(
+  '/cart',
+  body('productId').isString(),
+  body('variantId').optional().isString(),
+  body('quantity').isInt({ gt: 0 }),
+  handleInputErrors,
+  addItemToCart
+);
+router.put(
+  '/cart/:itemId',
+  body('quantity').isInt(),
+  handleInputErrors,
+  updateCartItem
+);
+router.delete('/cart/:itemId', removeItemFromCart);
 
 export default router;

@@ -74,6 +74,7 @@ router.post(
   body('name').isString(),
   body('description').isString(),
   body('price').isFloat(),
+  body('attributes').optional().isObject(),
   handleInputErrors,
   createProductVariant
 );
@@ -82,6 +83,7 @@ router.put(
   body('name').optional().isString(),
   body('description').optional().isString(),
   body('price').optional().isFloat(),
+  body('attributes').optional().isObject(),
   handleInputErrors,
   updateProductVariant
 );

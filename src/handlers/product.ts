@@ -118,12 +118,13 @@ export const createProductVariant = async (req, res) => {
     return res.status(404).json({ message: "Product not found or you don't have access to it" });
   }
 
-  const { name, description, price } = req.body;
+  const { name, description, price, attributes } = req.body;
   const variant = await prisma.productVariant.create({
     data: {
       name,
       description,
       price,
+      attributes,
       productId,
     },
   });
@@ -148,7 +149,7 @@ export const updateProductVariant = async (req, res) => {
     return res.status(401).json({ message: "Unauthorized to update this variant" });
   }
 
-  const { name, description, price } = req.body;
+  const { name, description, price, attributes } = req.body;
   const variant = await prisma.productVariant.update({
     where: {
       id: variantId,
@@ -157,6 +158,7 @@ export const updateProductVariant = async (req, res) => {
       name,
       description,
       price,
+      attributes,
     },
   });
 

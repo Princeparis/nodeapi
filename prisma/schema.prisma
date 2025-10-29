@@ -42,6 +42,7 @@ model ProductVariant {
   name        String
   description String
   price       Float
+  attributes  Json?
   productId   String
   product     Product     @relation(fields: [productId], references: [id])
   orderItems  OrderItem[]

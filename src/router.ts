@@ -35,6 +35,7 @@ import {
   updateCartItem,
   removeItemFromCart,
 } from './handlers/cart';
+import { initiatePayment } from './handlers/payment';
 import { handleInputErrors } from './modules/middleware';
 import { adminOnly } from './modules/auth';
 import { getCurrentUser, updateUser } from './handlers/user';
@@ -177,5 +178,8 @@ router.put(
   updateCartItem
 );
 router.delete('/cart/:itemId', removeItemFromCart);
+
+// Payment
+router.post('/payment/initiate', body('orderId').isString(), handleInputErrors, initiatePayment);
 
 export default router;

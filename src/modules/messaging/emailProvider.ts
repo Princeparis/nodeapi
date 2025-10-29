@@ -19,6 +19,11 @@ const getTemplate = (template, payload) => {
         subject: 'Password Reset Request',
         html: `<p>Hi ${payload.user.firstName},</p><p>You requested a password reset. Here is your reset token: ${payload.resetToken}</p><p>If you did not request this, please ignore this email.</p>`,
       };
+    case 'orderPaid':
+      return {
+        subject: 'Payment Confirmation',
+        html: `<p>Hi ${payload.user.firstName},</p><p>Your payment for order ${payload.order.id} has been received.</p>`,
+      };
     default:
       throw new Error('Unsupported email template');
   }

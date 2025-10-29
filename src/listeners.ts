@@ -33,6 +33,26 @@ eventEmitter.on('user.created', (user) => {
   });
 });
 
+eventEmitter.on('order.paid', async (order) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: order.userId,
+    },
+  });
+
+  if (user) {
+    // TODO: Replace user.username with a dedicated email field
+    sendMessage('email', {
+      to: user.username,
+      template: 'orderPaid',
+      data: {
+        user,
+        order,
+      },
+    });
+  }
+});
+
 eventEmitter.on('user.forgotPassword', ({ user, resetToken }) => {
   // TODO: Replace user.username with a dedicated email field
   sendMessage('email', {

@@ -81,19 +81,21 @@ model CartItem {
 
 enum ORDER_STATUS {
   PENDING
+  PAID
   COMPLETED
   CANCELLED
 }
 
 model Order {
-  id        String       @id @default(uuid())
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  userId    String
-  user      User         @relation(fields: [userId], references: [id])
-  total     Float
-  status    ORDER_STATUS @default(PENDING)
-  items     OrderItem[]
+  id               String       @id @default(uuid())
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  userId           String
+  user             User         @relation(fields: [userId], references: [id])
+  total            Float
+  status           ORDER_STATUS @default(PENDING)
+  paymentReference String?      @unique
+  items            OrderItem[]
 }
 
 model OrderItem {

@@ -9,6 +9,7 @@ import {
   forgotPassword,
   resetPassword,
 } from "./handlers/user";
+import { handlePaystackWebhook } from "./handlers/payment";
 import { body } from "express-validator";
 import { handleInputErrors } from "./modules/middleware";
 
@@ -16,6 +17,9 @@ const app = express();
 
 app.use(cors());
 app.use(morgan("dev"));
+
+app.post("/paystack/webhook", express.raw({ type: 'application/json' }), handlePaystackWebhook);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

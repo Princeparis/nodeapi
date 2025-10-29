@@ -10,9 +10,8 @@ eventEmitter.on('order.created', async (order) => {
   });
 
   if (user) {
-    // TODO: Replace user.username with a dedicated email field
     sendMessage('email', {
-      to: user.username,
+      to: user.email,
       template: 'orderConfirmation',
       data: {
         user,
@@ -23,14 +22,51 @@ eventEmitter.on('order.created', async (order) => {
 });
 
 eventEmitter.on('user.created', (user) => {
-  // TODO: Replace user.username with a dedicated email field
   sendMessage('email', {
-    to: user.username,
+    to: user.email,
     template: 'welcome',
     data: {
       user,
     },
   });
+});
+
+eventEmitter.on('order.shipped', async (order) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: order.userId,
+    },
+  });
+
+  if (user) {
+    sendMessage('email', {
+      to: user.email,
+      template: 'orderShipped',
+      data: {
+        user,
+        order,
+      },
+    });
+  }
+});
+
+eventEmitter.on('order.delivered', async (order) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: order.userId,
+    },
+  });
+
+  if (user) {
+    sendMessage('email', {
+      to: user.email,
+      template: 'orderDelivered',
+      data: {
+        user,
+        order,
+      },
+    });
+  }
 });
 
 eventEmitter.on('order.paid', async (order) => {
@@ -41,9 +77,8 @@ eventEmitter.on('order.paid', async (order) => {
   });
 
   if (user) {
-    // TODO: Replace user.username with a dedicated email field
     sendMessage('email', {
-      to: user.username,
+      to: user.email,
       template: 'orderPaid',
       data: {
         user,
@@ -54,9 +89,8 @@ eventEmitter.on('order.paid', async (order) => {
 });
 
 eventEmitter.on('user.forgotPassword', ({ user, resetToken }) => {
-  // TODO: Replace user.username with a dedicated email field
   sendMessage('email', {
-    to: user.username,
+    to: user.email,
     template: 'passwordReset',
     data: {
       user,

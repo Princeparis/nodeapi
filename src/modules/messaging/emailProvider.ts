@@ -24,6 +24,16 @@ const getTemplate = (template, payload) => {
         subject: 'Payment Confirmation',
         html: `<p>Hi ${payload.user.firstName},</p><p>Your payment for order ${payload.order.id} has been received.</p>`,
       };
+    case 'orderShipped':
+      return {
+        subject: 'Your order has been shipped',
+        html: `<p>Hi ${payload.user.firstName},</p><p>Your order ${payload.order.id} has been shipped.</p>`,
+      };
+    case 'orderDelivered':
+      return {
+        subject: 'Your order has been delivered',
+        html: `<p>Hi ${payload.user.firstName},</p><p>Your order ${payload.order.id} has been delivered.</p>`,
+      };
     default:
       throw new Error('Unsupported email template');
   }

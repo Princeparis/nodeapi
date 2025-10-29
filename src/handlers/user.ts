@@ -7,12 +7,36 @@ export const createNewUser = async (req, res) => {
   const user = await prisma.user.create({
     data: {
       username: req.body.username,
+      email: req.body.email,
       password: await hashPassword(req.body.password),
+      addresses: [],
     },
   });
 
   eventEmitter.emit("user.created", user);
 
+  const token = createJWT(user);
+  res.json({ token });
+};
+
+export const signIn = async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      username: req.body.username,
+    },
+  });
+  if (!user) {
+    res.status(401);
+    res.json({ message: "Invalid username or password" });
+    return;
+  }
+
+  const isValid = await comparePassword(req.body.password, user.password);
+  if (!isValid) {
+    res.status(401);
+    res.json({ message: "Invalid username or password" });
+    return;
+  }
   const token = createJWT(user);
   res.json({ token });
 };
@@ -90,24 +114,37 @@ export const resetPassword = async (req, res) => {
   res.json({ message: "Password reset successful" });
 };
 
-export const signIn = async (req, res) => {
+export const getCurrentUser = async (req, res) => {
   const user = await prisma.user.findUnique({
     where: {
-      username: req.body.username,
+      id: req.user.id,
+    },
+    select: {
+      id: true,
+      username: true,
+      firstName: true,
+      lastName: true,
+      addresses: true,
+      defaultAddress: true,
     },
   });
-  if (!user) {
-    res.status(401);
-    res.json({ message: "Invalid username or password" });
-    return;
-  }
-  
-  const isValid = await comparePassword(req.body.password, user.password);
-  if (!isValid) {
-    res.status(401);
-    res.json({ message: "Invalid username or password" });
-    return;
-  }
-  const token = createJWT(user);
-  res.json({ token });
+
+  res.json({ data: user });
+};
+
+export const updateUser = async (req, res) => {
+  const { firstName, lastName, addresses, defaultAddress } = req.body;
+  const user = await prisma.user.update({
+    where: {
+      id: req.user.id,
+    },
+    data: {
+      firstName,
+      lastName,
+      addresses,
+      defaultAddress,
+    },
+  });
+
+  res.json({ data: user });
 };

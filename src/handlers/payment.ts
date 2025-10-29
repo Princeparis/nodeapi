@@ -27,7 +27,7 @@ export const initiatePayment = async (req, res) => {
 
   try {
     const response = await paystack.post('/transaction/initialize', {
-      email: user.username, // Assuming username is the email
+      email: user.email,
       amount: order.total * 100, // Paystack expects amount in kobo
       reference: `${order.id}-${Date.now()}`,
     });
@@ -58,10 +58,38 @@ export const handlePaystackWebhook = async (req, res) => {
 
   if (event.event === 'charge.success') {
     const { reference } = event.data;
-    const order = await prisma.order.update({
+
+    const order = await prisma.order.findUnique({
       where: { paymentReference: reference },
+      include: {
+        items: true,
+      },
+    });
+
+    if (!order) {
+      return res.sendStatus(404);
+    }
+
+    const stockUpdates = order.items.map(item => {
+      if (item.variantId) {
+        return prisma.productVariant.update({
+          where: { id: item.variantId },
+          data: { stock: { decrement: item.quantity } },
+        });
+      } else {
+        return prisma.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+        });
+      }
+    });
+
+    const updatedOrder = prisma.order.update({
+      where: { id: order.id },
       data: { status: 'PAID' },
     });
+
+    await prisma.$transaction([...stockUpdates, updatedOrder]);
 
     eventEmitter.emit('order.paid', order);
   }

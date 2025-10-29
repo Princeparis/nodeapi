@@ -41,6 +41,28 @@ export const getOrder = async (req, res) => {
   res.json({ data: order });
 };
 
+export const updateOrderStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const order = await prisma.order.update({
+    where: {
+      id,
+    },
+    data: {
+      status,
+    },
+  });
+
+  if (status === 'SHIPPED') {
+    eventEmitter.emit('order.shipped', order);
+  } else if (status === 'DELIVERED') {
+    eventEmitter.emit('order.delivered', order);
+  }
+
+  res.json({ data: order });
+};
+
 // Create an order
 export const createOrder = async (req, res) => {
   const { items } = req.body;
@@ -74,7 +96,14 @@ export const createOrder = async (req, res) => {
       if (!variant) {
         return res.status(404).json({ message: `Variant with id ${variantId} not found for product ${item.productId}` });
       }
+      if (variant.stock < item.quantity) {
+        return res.status(400).json({ message: `Not enough stock for variant ${variant.name}` });
+      }
       itemPrice = variant.price;
+    } else {
+      if (product.stock < item.quantity) {
+        return res.status(400).json({ message: `Not enough stock for product ${product.name}` });
+      }
     }
 
     total += itemPrice * item.quantity;

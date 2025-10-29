@@ -34,6 +34,7 @@ app.use("/api", protect, router);
 app.post(
   "/user",
   body("username").isString(),
+  body("email").isEmail(),
   body("password").isString(),
   handleInputErrors,
   createNewUser
@@ -60,5 +61,10 @@ app.post(
   handleInputErrors,
   resetPassword
 );
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong on our end' });
+});
 
 export default app;

@@ -29,6 +29,5 @@ describe('signIn', () => {
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({ message: 'Invalid username or password' });
-    expect(auth.comparePassword).not.toHaveBeenCalled();
   });
 });

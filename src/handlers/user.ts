@@ -25,17 +25,21 @@ export const signIn = async (req, res) => {
       username: req.body.username,
     },
   });
-  if (!user) {
+
+  const invalidCredentialsResponse = () => {
     res.status(401);
     res.json({ message: "Invalid username or password" });
-    return;
+  };
+
+  if (!user) {
+    // Perform a dummy password comparison to prevent timing attacks
+    await comparePassword("dummyPassword", "dummyHash");
+    return invalidCredentialsResponse();
   }
 
   const isValid = await comparePassword(req.body.password, user.password);
   if (!isValid) {
-    res.status(401);
-    res.json({ message: "Invalid username or password" });
-    return;
+    return invalidCredentialsResponse();
   }
   const token = createJWT(user);
   res.json({ token });

@@ -12,6 +12,41 @@ export const createNewUser = async (req, res) => {
   res.json({ token });
 };
 
+// Get the current user's profile
+export const getCurrentUser = async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.user.id,
+    },
+    select: {
+      id: true,
+      username: true,
+      firstName: true,
+      lastName: true,
+      address: true,
+    },
+  });
+
+  res.json({ data: user });
+};
+
+// Update the current user's profile
+export const updateUser = async (req, res) => {
+  const { firstName, lastName, address } = req.body;
+  const user = await prisma.user.update({
+    where: {
+      id: req.user.id,
+    },
+    data: {
+      firstName,
+      lastName,
+      address,
+    },
+  });
+
+  res.json({ data: user });
+};
+
 export const signIn = async (req, res) => {
   const user = await prisma.user.findUnique({
     where: {

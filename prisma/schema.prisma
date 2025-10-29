@@ -11,21 +11,70 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  createdAt DateTime  @default(now())
-  username  String    @unique
-  password  String
-  products  Product[]
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  username   String   @unique
+  password   String
+  firstName  String?
+  lastName   String?
+  address    String?
+  products   Product[]
+  orders     Order[]
 }
 
 model Product {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-
-  name        String   @db.VarChar(255)
+  id          String           @id @default(uuid())
+  createdAt   DateTime         @default(now())
+  name        String           @unique @db.VarChar(255)
+  description String
+  price       Float
+  category    String
   belongsToId String
-  belongsTo   User     @relation(fields: [belongsToId], references: [id])
+  belongsTo   User             @relation(fields: [belongsToId], references: [id])
   updates     Update[]
+  variants    ProductVariant[]
+  orderItems  OrderItem[]
+}
+
+model ProductVariant {
+  id          String      @id @default(uuid())
+  createdAt   DateTime    @default(now())
+  name        String
+  description String
+  price       Float
+  productId   String
+  product     Product     @relation(fields: [productId], references: [id])
+  orderItems  OrderItem[]
+}
+
+enum ORDER_STATUS {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+model Order {
+  id        String       @id @default(uuid())
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  total     Float
+  status    ORDER_STATUS @default(PENDING)
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id         String          @id @default(uuid())
+  createdAt  DateTime        @default(now())
+  quantity   Int
+  price      Float
+  orderId    String
+  order      Order           @relation(fields: [orderId], references: [id])
+  productId  String
+  product    Product         @relation(fields: [productId], references: [id])
+  variantId  String?
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
 }
 
 enum UPDATE_STATUS {

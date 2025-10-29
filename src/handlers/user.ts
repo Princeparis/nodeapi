@@ -1,17 +1,56 @@
 import crypto from "crypto";
 import prisma from "../db";
 import { comparePassword, createJWT, hashPassword } from "../modules/auth";
+import eventEmitter from "../modules/events";
 
 export const createNewUser = async (req, res) => {
   const user = await prisma.user.create({
     data: {
       username: req.body.username,
       password: await hashPassword(req.body.password),
-      addresses: [],
     },
   });
+
+  eventEmitter.emit("user.created", user);
+
   const token = createJWT(user);
   res.json({ token });
+};
+
+export const forgotPassword = async (req, res) => {
+  const { username } = req.body;
+  const user = await prisma.user.findUnique({
+    where: {
+      username,
+    },
+  });
+
+  if (!user) {
+    // Still send a success-like response to prevent user enumeration
+    return res.json({ message: "If a user with that email exists, a password reset link has been sent." });
+  }
+
+  const resetToken = crypto.randomBytes(20).toString("hex");
+  const passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  const passwordResetExpires = new Date(Date.now() + 3600000); // 1 hour
+
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      passwordResetToken,
+      passwordResetExpires,
+    },
+  });
+
+  eventEmitter.emit("user.forgotPassword", { user, resetToken });
+
+  res.json({ message: "If a user with that email exists, a password reset link has been sent." });
 };
 
 export const resetPassword = async (req, res) => {
@@ -49,79 +88,6 @@ export const resetPassword = async (req, res) => {
   });
 
   res.json({ message: "Password reset successful" });
-};
-
-export const forgotPassword = async (req, res) => {
-  const { username } = req.body;
-  const user = await prisma.user.findUnique({
-    where: {
-      username,
-    },
-  });
-
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
-  }
-
-  const resetToken = crypto.randomBytes(20).toString("hex");
-  const passwordResetToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-
-  const passwordResetExpires = new Date(Date.now() + 3600000); // 1 hour
-
-  await prisma.user.update({
-    where: {
-      id: user.id,
-    },
-    data: {
-      passwordResetToken,
-      passwordResetExpires,
-    },
-  });
-
-  res.json({
-    message: "Password reset token sent",
-    resetToken, // In a real app, this would be sent via email
-  });
-};
-
-// Get the current user's profile
-export const getCurrentUser = async (req, res) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      id: req.user.id,
-    },
-    select: {
-      id: true,
-      username: true,
-      firstName: true,
-      lastName: true,
-      addresses: true,
-      defaultAddress: true,
-    },
-  });
-
-  res.json({ data: user });
-};
-
-// Update the current user's profile
-export const updateUser = async (req, res) => {
-  const { firstName, lastName, addresses, defaultAddress } = req.body;
-  const user = await prisma.user.update({
-    where: {
-      id: req.user.id,
-    },
-    data: {
-      firstName,
-      lastName,
-      addresses,
-      defaultAddress,
-    },
-  });
-
-  res.json({ data: user });
 };
 
 export const signIn = async (req, res) => {

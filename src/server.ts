@@ -3,7 +3,12 @@ import router from "./router";
 import morgan from "morgan";
 import cors from "cors";
 import { protect } from "./modules/auth";
-import { createNewUser, signIn } from "./handlers/user";
+import {
+  createNewUser,
+  signIn,
+  forgotPassword,
+  resetPassword,
+} from "./handlers/user";
 import { body } from "express-validator";
 import { handleInputErrors } from "./modules/middleware";
 
@@ -35,6 +40,21 @@ app.post(
   body("password").isString(),
   handleInputErrors,
   signIn
+);
+
+app.post(
+  "/forgot-password",
+  body("username").isString(),
+  handleInputErrors,
+  forgotPassword
+);
+
+app.post(
+  "/reset-password",
+  body("resetToken").isString(),
+  body("password").isString(),
+  handleInputErrors,
+  resetPassword
 );
 
 export default app;

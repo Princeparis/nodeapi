@@ -123,6 +123,7 @@ router.post(
   body('title').isString(),
   body('body').isString(),
   handleInputErrors,
+  adminOnly,
   createUpdate
 );
 router.put(
@@ -132,9 +133,10 @@ router.put(
   body('status').optional().isIn(['IN_PROGRESS', 'SHIPPED', 'DEPRECATED']),
   body('version').optional().isString(),
   handleInputErrors,
+  adminOnly,
   updateUpdate
 );
-router.delete('/update/:id', deleteUpdate);
+router.delete('/update/:id', adminOnly, deleteUpdate);
 
 // Update Point
 router.get('/updatepoint', getUpdatePoints);
@@ -145,6 +147,7 @@ router.post(
   body('name').isString(),
   body('description').isString(),
   handleInputErrors,
+  adminOnly,
   createUpdatePoint
 );
 router.put(
@@ -152,9 +155,10 @@ router.put(
   body('name').optional().isString(),
   body('description').optional().isString(),
   handleInputErrors,
+  adminOnly,
   updateUpdatePoint
 );
-router.delete('/updatepoint/:id', deleteUpdatePoint);
+router.delete('/updatepoint/:id', adminOnly, deleteUpdatePoint);
 
 // Cart
 router.get('/cart', getCart);
@@ -173,18 +177,5 @@ router.put(
   updateCartItem
 );
 router.delete('/cart/:itemId', removeItemFromCart);
-
-// Order
-router.get('/order', getOrders);
-router.get('/order/:id', getOrder);
-router.post(
-  '/order',
-  body('items').isArray(),
-  body('items.*.productId').isString(),
-  body('items.*.quantity').isInt(),
-  body('items.*.price').isFloat(),
-  handleInputErrors,
-  createOrder
-);
 
 export default router;

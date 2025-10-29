@@ -5,7 +5,8 @@ export const createNewUser = async (req, res) => {
   const user = await prisma.user.create({
     data: {
       username: req.body.username,
-    password: await hashPassword(req.body.password),
+      password: await hashPassword(req.body.password),
+      addresses: [],
     },
   });
   const token = createJWT(user);
@@ -23,7 +24,8 @@ export const getCurrentUser = async (req, res) => {
       username: true,
       firstName: true,
       lastName: true,
-      address: true,
+      addresses: true,
+      defaultAddress: true,
     },
   });
 
@@ -32,7 +34,7 @@ export const getCurrentUser = async (req, res) => {
 
 // Update the current user's profile
 export const updateUser = async (req, res) => {
-  const { firstName, lastName, address } = req.body;
+  const { firstName, lastName, addresses, defaultAddress } = req.body;
   const user = await prisma.user.update({
     where: {
       id: req.user.id,
@@ -40,7 +42,8 @@ export const updateUser = async (req, res) => {
     data: {
       firstName,
       lastName,
-      address,
+      addresses,
+      defaultAddress,
     },
   });
 

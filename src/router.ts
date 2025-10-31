@@ -14,6 +14,7 @@ import {
   createOrder,
   getOrder,
   getOrders,
+  updateOrderStatus,
 } from './handlers/order';
 import {
   createUpdate,
@@ -35,6 +36,8 @@ import {
   updateCartItem,
   removeItemFromCart,
 } from './handlers/cart';
+import { initiatePayment } from './handlers/payment';
+import { createReview, getReviewsForProduct } from './handlers/review';
 import { handleInputErrors } from './modules/middleware';
 import { adminOnly } from './modules/auth';
 import { getCurrentUser, updateUser } from './handlers/user';
@@ -109,9 +112,15 @@ router.post(
   body('items').isArray(),
   body('items.*.productId').isString(),
   body('items.*.quantity').isInt(),
-  body('items.*.price').isFloat(),
   handleInputErrors,
   createOrder
+);
+router.put(
+  '/order/:id/status',
+  body('status').isIn(['PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
+  handleInputErrors,
+  adminOnly,
+  updateOrderStatus
 );
 
 // Update
@@ -123,6 +132,7 @@ router.post(
   body('title').isString(),
   body('body').isString(),
   handleInputErrors,
+  adminOnly,
   createUpdate
 );
 router.put(
@@ -132,9 +142,10 @@ router.put(
   body('status').optional().isIn(['IN_PROGRESS', 'SHIPPED', 'DEPRECATED']),
   body('version').optional().isString(),
   handleInputErrors,
+  adminOnly,
   updateUpdate
 );
-router.delete('/update/:id', deleteUpdate);
+router.delete('/update/:id', adminOnly, deleteUpdate);
 
 // Update Point
 router.get('/updatepoint', getUpdatePoints);
@@ -145,6 +156,7 @@ router.post(
   body('name').isString(),
   body('description').isString(),
   handleInputErrors,
+  adminOnly,
   createUpdatePoint
 );
 router.put(
@@ -152,9 +164,10 @@ router.put(
   body('name').optional().isString(),
   body('description').optional().isString(),
   handleInputErrors,
+  adminOnly,
   updateUpdatePoint
 );
-router.delete('/updatepoint/:id', deleteUpdatePoint);
+router.delete('/updatepoint/:id', adminOnly, deleteUpdatePoint);
 
 // Cart
 router.get('/cart', getCart);
@@ -173,5 +186,18 @@ router.put(
   updateCartItem
 );
 router.delete('/cart/:itemId', removeItemFromCart);
+
+// Payment
+router.post('/payment/initiate', body('orderId').isString(), handleInputErrors, initiatePayment);
+
+// Review
+router.get('/product/:productId/reviews', getReviewsForProduct);
+router.post(
+  '/product/:productId/reviews',
+  body('rating').isInt({ gt: 0, lt: 6 }),
+  body('comment').isString(),
+  handleInputErrors,
+  createReview
+);
 
 export default router;

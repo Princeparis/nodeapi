@@ -16,17 +16,21 @@ enum Role {
 }
 
 model User {
-  id             String    @id @default(uuid())
-  createdAt      DateTime  @default(now())
-  username       String    @unique
-  password       String
-  firstName      String?
-  lastName       String?
-  addresses      String[]
-  defaultAddress String?
-  role           Role      @default(USER)
-  orders         Order[]
-  cart           Cart?
+  id                     String    @id @default(uuid())
+  createdAt              DateTime  @default(now())
+  username               String    @unique
+  email                  String    @unique
+  password               String
+  firstName              String?
+  lastName               String?
+  addresses              String[]
+  defaultAddress         String?
+  role                   Role      @default(USER)
+  passwordResetToken     String?   @unique
+  passwordResetExpires   DateTime?
+  orders                 Order[]
+  cart                   Cart?
+  reviews                Review[]
 }
 
 model Product {
@@ -36,10 +40,12 @@ model Product {
   description String
   price       Float
   category    String
+  stock       Int              @default(0)
   updates     Update[]
   variants    ProductVariant[]
   orderItems  OrderItem[]
   cartItems   CartItem[]
+  reviews     Review[]
 }
 
 model ProductVariant {
@@ -49,6 +55,7 @@ model ProductVariant {
   description String
   price       Float
   attributes  Json?
+  stock       Int         @default(0)
   productId   String
   product     Product     @relation(fields: [productId], references: [id])
   orderItems  OrderItem[]
@@ -79,19 +86,23 @@ model CartItem {
 
 enum ORDER_STATUS {
   PENDING
-  COMPLETED
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
   CANCELLED
 }
 
 model Order {
-  id        String       @id @default(uuid())
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  userId    String
-  user      User         @relation(fields: [userId], references: [id])
-  total     Float
-  status    ORDER_STATUS @default(PENDING)
-  items     OrderItem[]
+  id               String       @id @default(uuid())
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  userId           String
+  user             User         @relation(fields: [userId], references: [id])
+  total            Float
+  status           ORDER_STATUS @default(PENDING)
+  paymentReference String?      @unique
+  items            OrderItem[]
 }
 
 model OrderItem {
@@ -116,7 +127,7 @@ enum UPDATE_STATUS {
 model Update {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
 
   title        String
   body         String
@@ -131,10 +142,25 @@ model Update {
 model UpdatePoint {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
 
   name        String @db.VarChar(255)
   description String
   updateId    String
   update      Update @relation(fields: [updateId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rating    Int
+  comment   String
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
 }

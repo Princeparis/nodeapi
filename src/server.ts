@@ -3,7 +3,13 @@ import router from "./router";
 import morgan from "morgan";
 import cors from "cors";
 import { protect } from "./modules/auth";
-import { createNewUser, signIn } from "./handlers/user";
+import {
+  createNewUser,
+  signIn,
+  forgotPassword,
+  resetPassword,
+} from "./handlers/user";
+import { handlePaystackWebhook } from "./handlers/payment";
 import { body } from "express-validator";
 import { handleInputErrors } from "./modules/middleware";
 
@@ -11,6 +17,9 @@ const app = express();
 
 app.use(cors());
 app.use(morgan("dev"));
+
+app.post("/paystack/webhook", express.raw({ type: 'application/json' }), handlePaystackWebhook);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -25,6 +34,7 @@ app.use("/api", protect, router);
 app.post(
   "/user",
   body("username").isString(),
+  body("email").isEmail(),
   body("password").isString(),
   handleInputErrors,
   createNewUser
@@ -36,5 +46,25 @@ app.post(
   handleInputErrors,
   signIn
 );
+
+app.post(
+  "/forgot-password",
+  body("username").isString(),
+  handleInputErrors,
+  forgotPassword
+);
+
+app.post(
+  "/reset-password",
+  body("resetToken").isString(),
+  body("password").isString(),
+  handleInputErrors,
+  resetPassword
+);
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong on our end' });
+});
 
 export default app;

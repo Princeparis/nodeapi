@@ -1,4 +1,5 @@
 import prisma from "../db";
+import eventEmitter from "../modules/events";
 
 // Get all orders for a user
 export const getOrders = async (req, res) => {
@@ -40,15 +41,49 @@ export const getOrder = async (req, res) => {
   res.json({ data: order });
 };
 
+export const updateOrderStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const order = await prisma.order.update({
+    where: {
+      id,
+    },
+    data: {
+      status,
+    },
+  });
+
+  if (status === 'SHIPPED') {
+    eventEmitter.emit('order.shipped', order);
+  } else if (status === 'DELIVERED') {
+    eventEmitter.emit('order.delivered', order);
+  }
+
+  res.json({ data: order });
+};
+
 // Create an order
 export const createOrder = async (req, res) => {
   const { items } = req.body;
+
+  const productIds = items.map((item) => item.productId);
+  const products = await prisma.product.findMany({
+    where: {
+      id: {
+        in: productIds,
+      },
+    },
+    include: {
+      variants: true,
+    },
+  });
 
   const orderItemsData = [];
   let total = 0;
 
   for (const item of items) {
-    const product = await prisma.product.findUnique({ where: { id: item.productId } });
+    const product = products.find((p) => p.id === item.productId);
     if (!product) {
       return res.status(404).json({ message: `Product with id ${item.productId} not found` });
     }
@@ -57,13 +92,18 @@ export const createOrder = async (req, res) => {
     let variantId = item.variantId || null;
 
     if (variantId) {
-      const variant = await prisma.productVariant.findUnique({
-        where: { id: variantId, productId: item.productId },
-      });
+      const variant = product.variants.find((v) => v.id === variantId);
       if (!variant) {
         return res.status(404).json({ message: `Variant with id ${variantId} not found for product ${item.productId}` });
       }
+      if (variant.stock < item.quantity) {
+        return res.status(400).json({ message: `Not enough stock for variant ${variant.name}` });
+      }
       itemPrice = variant.price;
+    } else {
+      if (product.stock < item.quantity) {
+        return res.status(400).json({ message: `Not enough stock for product ${product.name}` });
+      }
     }
 
     total += itemPrice * item.quantity;
@@ -91,6 +131,8 @@ export const createOrder = async (req, res) => {
       items: true,
     },
   });
+
+  eventEmitter.emit('order.created', order);
 
   res.json({ data: order });
 };

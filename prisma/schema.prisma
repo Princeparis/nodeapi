@@ -31,6 +31,7 @@ model User {
   orders                 Order[]
   cart                   Cart?
   reviews                Review[]
+  apiKeys                ApiKey[]
 }
 
 model Product {
@@ -163,4 +164,16 @@ model Review {
 
   productId String
   product   Product  @relation(fields: [productId], references: [id])
+}
+
+model ApiKey {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  name       String
+  keyHash    String   @unique
+  lastUsedAt DateTime?
+
+  userId String
+  user   User     @relation(fields: [userId], references: [id])
 }

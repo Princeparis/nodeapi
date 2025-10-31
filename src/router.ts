@@ -38,6 +38,7 @@ import {
 } from './handlers/cart';
 import { initiatePayment } from './handlers/payment';
 import { createReview, getReviewsForProduct } from './handlers/review';
+import { createApiKey, deleteApiKey, getApiKeys } from './handlers/apiKey';
 import { handleInputErrors } from './modules/middleware';
 import { adminOnly } from './modules/auth';
 import { getCurrentUser, updateUser } from './handlers/user';
@@ -199,5 +200,10 @@ router.post(
   handleInputErrors,
   createReview
 );
+
+// API Keys
+router.get('/keys', getApiKeys);
+router.post('/keys', body('name').isString(), handleInputErrors, createApiKey);
+router.delete('/keys/:id', deleteApiKey);
 
 export default router;

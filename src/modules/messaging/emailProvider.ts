@@ -1,38 +1,48 @@
 import { Resend } from 'resend';
+import fs from 'fs';
+import path from 'path';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const getTemplate = (template, payload) => {
+  const templatePath = path.join(__dirname, 'templates', `${template}.html`);
+  let html = fs.readFileSync(templatePath, 'utf-8');
+
+  for (const key in payload) {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    html = html.replace(regex, payload[key]);
+  }
+
   switch (template) {
     case 'orderConfirmation':
       return {
         subject: 'Order Confirmation',
-        html: `<p>Thank you for your order, ${payload.user.firstName}!</p><p>Your order ID is ${payload.order.id}.</p>`,
+        html,
       };
     case 'welcome':
       return {
         subject: 'Welcome to our platform!',
-        html: `<p>Hi ${payload.user.firstName},</p><p>Welcome! We are excited to have you on board.</p>`,
+        html,
       };
     case 'passwordReset':
       return {
         subject: 'Password Reset Request',
-        html: `<p>Hi ${payload.user.firstName},</p><p>You requested a password reset. Here is your reset token: ${payload.resetToken}</p><p>If you did not request this, please ignore this email.</p>`,
+        html,
       };
     case 'orderPaid':
       return {
         subject: 'Payment Confirmation',
-        html: `<p>Hi ${payload.user.firstName},</p><p>Your payment for order ${payload.order.id} has been received.</p>`,
+        html,
       };
     case 'orderShipped':
       return {
         subject: 'Your order has been shipped',
-        html: `<p>Hi ${payload.user.firstName},</p><p>Your order ${payload.order.id} has been shipped.</p>`,
+        html,
       };
     case 'orderDelivered':
       return {
         subject: 'Your order has been delivered',
-        html: `<p>Hi ${payload.user.firstName},</p><p>Your order ${payload.order.id} has been delivered.</p>`,
+        html,
       };
     default:
       throw new Error('Unsupported email template');
